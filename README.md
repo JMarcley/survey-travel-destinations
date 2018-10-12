@@ -1,6 +1,6 @@
-# Baseball Hall of Fame Position Player Comparison
+# Reddit r/travel survey data visualization
 
-An interactive WebGL graphic showing a single statistic comparison of MLB Hall of Fame Position Players. The statistic chosen for analysis is Wins Above Replacement (WAR). This is not the place for a debate about distilling a HOF player down to a single statistic, just an experiment to visualize this stat.
+An interactive WebGL graphic showing locations of unexpectedly great and disappointing travel experiences by the r/travel community.
 
 ## Dependencies
 
@@ -9,7 +9,7 @@ An interactive WebGL graphic showing a single statistic comparison of MLB Hall o
 
 ## View on Heroku
 
-[http://hof-position-players.herokuapp.com](http://hof-position-players.herokuapp.com)
+SOON
 
 ## Authors
 
