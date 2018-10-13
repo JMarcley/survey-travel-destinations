@@ -21,7 +21,9 @@ var animationFrames = 50;
 var cameraAnimationFrames = animationFrames * 1.9;
 var animationState = { y: 0, z: 0, camera: 0 };
 var view = 0;
-var thisPoint = undefined;
+var thisCurve = undefined;
+var pt1;
+var pt2;
 var linesZero = [];
 var linesOne = [];
 var cameraPosition = [
@@ -190,10 +192,13 @@ var countryOrder = [
 	"Australia",
 	"New Zealand"
 ]
+var curveSystem = [];
+var oldOlabel = undefined;
+var oldDLabel = undefined;
+var screenEdges;
 
 init();
 loadData(buildScene);
-// buildScene();
 animate();
 
 function init() {
@@ -256,7 +261,8 @@ function init() {
   // document.addEventListener( 'mouseleave', onDocumentMouseLeave, false );
 
 	// setAxisLabels();
-	findScreenEdgesAt(0);
+	screenEdges = findScreenEdgesAt(0);
+	console.log(screenEdges);
 	// cb();
 }
 
@@ -609,21 +615,19 @@ function buildScene(data) {
 	var ellipse = new THREE.Line( geometry, material );
 	scene.add(ellipse)
 
-	console.log(curve.getPoint(0.25));
-	console.log(curve.getPoint(0.25));
-	console.log(curve.getPoint(1));
-
 	var usedForOrigin = [];
 	var usedForDestination = [];
 	var offset = {}
 	countryOrder.map(function(c) {
 		offset[c] = 0;
 	});
-	console.log(offset);
+	// console.log(offset);
 	for (var i = 0; i < data.favorites.length; i++) {
 		var arcPosStart = curve.getPoint( ( data.favUniques.indexOf(data.favorites[i][0] ) + offset[data.favorites[i][0]]) / data.favUniques.length);
 		var arcPosEnd = curve.getPoint( ( data.favUniques.indexOf(data.favorites[i][1] ) + offset[data.favorites[i][1]] ) / data.favUniques.length);
-		addArc(arcPosStart, arcPosEnd);
+		var oName = data.favorites[i][0];
+		var dName = data.favorites[i][1];
+		addArc(arcPosStart, arcPosEnd, oName, dName);
 		offset[data.favorites[i][0]] += 1;
 		offset[data.favorites[i][1]] += 1;
 		// data.favorites[i]
@@ -631,7 +635,7 @@ function buildScene(data) {
 
 }
 
-function addArc(vec1, vec2) {
+function addArc(vec1, vec2, origin, destination) {
 	var curve = new THREE.QuadraticBezierCurve(
 		vec1,
 		new THREE.Vector2( 0, 0 ),
@@ -649,13 +653,6 @@ function addArc(vec1, vec2) {
 		color.setRGB( 0, i / count, 0 );
 		geometry.attributes.color.setXYZ( i, color.r, color.g, color.b );
 	}
-	// var material = new THREE.LineBasicMaterial( { color : 0x00ff00, vertexColors: THREE.VertexColors } );
-	var material = new THREE.MeshPhongMaterial( {
-		color: 0x000000,
-		flatShading: true,
-		vertexColors: THREE.VertexColors,
-		shininess: 0
-	} );
 
 	//Create the final object to add to the scene
 	var lineVertexShader = document.getElementById("line-vertexshader").textContent;
@@ -670,6 +667,9 @@ function addArc(vec1, vec2) {
 	    },
 			origin: {
 				value: new THREE.Vector3()
+			},
+			opacity: {
+				value: 0.4
 			}
 	  },
 	  vertexShader: lineVertexShader,
@@ -677,7 +677,124 @@ function addArc(vec1, vec2) {
 	  transparent: true
 	}));
 	curveObject.geometry.attributes.color.needsUpdate = true;
+	curveObject.userData = {
+		origin: origin,
+		destination: destination
+	}
 	scene.add(curveObject);
+	curveSystem.push(curveObject);
+}
+
+function addPoints(curveObj) {
+	var startPoint = curveObj.geometry.attributes.position.array.slice(0, 3);
+	var endPoint = curveObj.geometry.attributes.position.array.slice(-3);
+	var geometry1 = new THREE.CircleGeometry(2, 32);
+	var material1 = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+	pt1 = new THREE.Mesh( geometry1, material1 );
+	pt1.position.x = startPoint[0];
+	pt1.position.y = startPoint[1];
+	pt1.position.z = startPoint[2];
+	console.log(pt1);
+
+	var geometry2 = new THREE.CircleGeometry(2, 32);
+	var material2 = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+	pt2 = new THREE.Mesh( geometry2, material2 );
+	pt2.position.x = endPoint[0];
+	pt2.position.y = endPoint[1];
+	pt2.position.z = endPoint[2];
+	scene.add(pt1);
+	scene.add(pt2);
+
+	addLabels(startPoint, endPoint, curveObj.userData.origin, curveObj.userData.destination);
+}
+
+function deletePoints() {
+	scene.remove(pt1);
+	scene.remove(pt2);
+}
+
+function addLabels(oPt, dPt, oLabel, dLabel) {
+
+	if (oldOlabel !== undefined) {
+		document.body.removeChild(oldOlabel);
+		document.body.removeChild(oldDLabel);
+	}
+	var origin = new THREE.Vector3(oPt[0], oPt[1], oPt[2]);
+	var destination = new THREE.Vector3(dPt[0], dPt[1], dPt[2]);
+	var transMat = new THREE.Matrix3();
+	transMat.multiplyScalar(1.2);
+
+	console.log(origin);
+	var originScreenPos = {
+		x: origin.x / Math.abs(screenEdges.l) * ( window.innerWidth / 2 ),
+		y: origin.y / Math.abs(screenEdges.t) * ( window.innerHeight / 2 )
+	}
+	var destinationScreenPos = {
+		x: destination.x / screenEdges.l * ( window.innerWidth / 2 ),
+		y: destination.y / screenEdges.t * ( window.innerHeight / 2 )
+	}
+	console.log(originScreenPos);
+
+	// var point = oPt
+	var oLabelText = document.createTextNode(oLabel);
+	var oLabelElement = document.createElement("P");
+	var oLabelParent = document.createElement("DIV");
+	oLabelElement.appendChild(oLabelText);
+	oLabelParent.appendChild(oLabelElement);
+	oLabelParent.style.top = originScreenPos.x + window.innerHeight / 2;
+	oLabelParent.style.left = originScreenPos.y + window.innerWidth / 2;
+	var dLabelText = document.createTextNode(dLabel);
+	var dLabelElement = document.createElement("P");
+	dLabelElement.style.color = "#00ff00";
+	var dLabelParent = document.createElement("DIV");
+	dLabelElement.appendChild(dLabelText);
+	dLabelParent.appendChild(dLabelElement);
+	dLabelParent.style.top = destinationScreenPos.x + window.innerHeight / 2;
+	dLabelParent.style.left = destinationScreenPos.y = window.innerWidth / 2;
+
+
+	// find quardant
+	if (oPt[0] >= 0 && oPt[1] >= 0) {
+		// top right
+		oLabelParent.setAttribute("class", "top-right");
+		oLabelParent.style.transform = "translateX(50%) translateY(-50%)";
+	} else if (oPt[0] >= 0 && oPt[1] < 0) {
+		// bottom right
+		oLabelParent.setAttribute("class", "bottom-right");
+		oLabelParent.style.transform = "translateX(50%) translateY(50%)";
+	} else if (oPt[0] < 0 && oPt[1] >= 0) {
+		// top left
+		oLabelParent.setAttribute("class", "top-left");
+		oLabelParent.style.transform = "translateX(-50%) translateY(-50%)";
+	} else {
+		// bottom left
+		oLabelParent.setAttribute("class", "bottom-left");
+		oLabelParent.style.transform = "translateX(-50%) translateY(50%)";
+	}
+
+	if (dPt[0] >= 0 && dPt[1] >= 0) {
+		// top right
+		dLabelParent.setAttribute("class", "top-right");
+		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
+	} else if (dPt[0] >= 0 && dPt[1] < 0) {
+		// bottom right
+		dLabelParent.setAttribute("class", "bottom-right");
+		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
+	} else if (dPt[0] < 0 && dPt[1] >= 0) {
+		// top left
+		dLabelParent.setAttribute("class", "top-left");
+		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
+	} else {
+		// bottom left
+		dLabelParent.setAttribute("class", "bottom-left");
+		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
+	}
+
+	oldOlabel = oLabelParent;
+	oldDLabel = dLabelParent;
+	document.body.appendChild(oLabelParent);
+	document.body.appendChild(dLabelParent);
+
 }
 
 function appendText(data) {
@@ -933,27 +1050,35 @@ function onDocumentMouseMove( event ) {
 	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
   raycaster.setFromCamera( mouse, camera );
-  var intersects = raycaster.intersectObject( particleSystem, true );
+  var intersects = raycaster.intersectObjects( curveSystem, true );
   if ( intersects.length > 0 ) {
-		if ( thisPoint === undefined ) {
-			thisPoint = intersects[0].object.index;
-			particleSystem.children[thisPoint].material.size = 20;
-			particleSystem.children[thisPoint].material.size.needsUpdate = true;
+		// console.log();
+		// intersects[0].object.material.uniforms.opacity.value = 1.0;
+		// intersects[0].object.material.needsUpdate = true;
+		if ( thisCurve === undefined ) {
+			thisCurve = intersects[0].object;
+			intersects[0].object.material.uniforms.opacity.value = 1.0;
+			intersects[0].object.material.needsUpdate = true;
+			addPoints(thisCurve);
 		}
-		if (intersects[0].object.index !== thisPoint) {
-			particleSystem.children[thisPoint].material.size = 10;
-			particleSystem.children[thisPoint].material.size.needsUpdate = true;
-			thisPoint = intersects[0].object.index;
-			particleSystem.children[thisPoint].material.size = 20
-			particleSystem.children[thisPoint].material.size.needsUpdate = true;
+		if (intersects[0].object.uuid !== thisCurve.uuid) {
+			deletePoints();
+			thisCurve.material.uniforms.opacity.value = 0.2;
+			thisCurve.material.needsUpdate = true;
+			thisCurve = intersects[0].object;
+			intersects[0].object.material.uniforms.opacity.value = 1.0;
+			intersects[0].object.material.needsUpdate = true;
+			addPoints(thisCurve);
 
-			thisPoint = intersects[0].object.index;
-			console.log(intersects[0].object.geometry.attributes.position);
+			// thisPoint = intersects[0].object.uuid;
+			// console.log(intersects[0].object.geometry.attributes.position);
 		}
 
-    appendText(meta[thisPoint]);
+    // appendText(meta[thisPoint]);
 
-  }
+  } else {
+		deletePoints();
+	}
   /*
   // Parse all the faces
   for ( var i in intersects ) {
@@ -1168,6 +1293,12 @@ function findScreenEdgesAt(depth) {
 	var tr3DCoords = findThisScreenEdge(1, 1, 0, depth);
 	var br3DCoords = findThisScreenEdge(1, -1, 0, depth);
 
+	return {
+		t: tl3DCoords.y,
+		l: tl3DCoords.x,
+		r: br3DCoords.x,
+		b: br3DCoords.y
+	}
 
 	console.log("TL: ", tl3DCoords);
 	console.log("TR: ", tr3DCoords);
@@ -1183,4 +1314,10 @@ function findThisScreenEdge(xGL, yGL, zGL, depth) {
 		camera.position.x - ray.x * mult,
 		camera.position.y - ray.y * mult
 	)
+}
+
+function findScreenPosAt(x3DCoord, y3DCoord, z3DCoord) {
+	var these3DCoords = new THREE.Vector3(x3DCoord, y3DCoord, z3DCoord);
+	var ray = these3DCoords.applyMatrix4(camera.projectionMatrix);
+	console.log(ray);
 }
