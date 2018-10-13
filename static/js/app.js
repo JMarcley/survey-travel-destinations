@@ -202,7 +202,7 @@ loadData(buildScene);
 animate();
 
 function init() {
-	// loadingMessage();
+	loadingMessage();
 
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
   camera.position.x = cameraPosition[0].x;
@@ -1238,9 +1238,9 @@ function determineMaxYear(data) {
 
 function loadingMessage() {
 	if (!__DEV__) {
-		var title = "Analysis of Hall of Fame Position Players by Wins Above Replacement (WAR)";
-		var info1 = "This visualization shows the Wins Above Replacement statistic of every position player inducted into the Hall of Fame. Two views are available on the dependent axis: career WAR and career mean WAR per season normalized to a 162 game season";
-		var info2 = "This is a project I started because I am a baseball statistic nerd and as a way to learn some new technologies. This is a work in progress, so stay tuned."
+		var title = "Surprisingly Good Travel Destinations";
+		var info1 = "This visualization shows the unexpectedly good travel destinations according to the annual r/travel survey. Black denotes a respondent's country of citizenship and green denotes the destination.";
+		var info2 = "This is a work in progress, so stay tuned."
 		var info3 = "Note: If you are on a mobile device turn back now."
 		var messages = [info1, info2, info3];
 
