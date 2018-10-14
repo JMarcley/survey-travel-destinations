@@ -1,5 +1,5 @@
 //
-var __DEV__ = false;
+var __DEV__ = true;
 //
 
 var container, stats;
@@ -724,16 +724,17 @@ function addLabels(oPt, dPt, oLabel, dLabel) {
 	var transMat = new THREE.Matrix3();
 	transMat.multiplyScalar(1.2);
 
-	console.log(origin);
+	console.log(destination);
 	var originScreenPos = {
-		x: origin.x / Math.abs(screenEdges.l) * ( window.innerWidth / 2 ),
-		y: origin.y / Math.abs(screenEdges.t) * ( window.innerHeight / 2 )
+		x: origin.x / Math.abs(screenEdges.l) * ( window.innerWidth / 2 ) + window.innerWidth / 2,
+		y: - origin.y / Math.abs(screenEdges.t) * ( window.innerHeight / 2 ) + window.innerHeight / 2
 	}
 	var destinationScreenPos = {
-		x: destination.x / screenEdges.l * ( window.innerWidth / 2 ),
-		y: destination.y / screenEdges.t * ( window.innerHeight / 2 )
+		x: destination.x / Math.abs(screenEdges.l) * ( window.innerWidth / 2 ) + window.innerWidth / 2,
+		y: - destination.y / Math.abs(screenEdges.t) * ( window.innerHeight / 2 ) + window.innerHeight / 2
 	}
 	console.log(originScreenPos);
+	console.log(destinationScreenPos);
 
 	// var point = oPt
 	var oLabelText = document.createTextNode(oLabel);
@@ -741,53 +742,36 @@ function addLabels(oPt, dPt, oLabel, dLabel) {
 	var oLabelParent = document.createElement("DIV");
 	oLabelElement.appendChild(oLabelText);
 	oLabelParent.appendChild(oLabelElement);
-	oLabelParent.style.top = originScreenPos.x + window.innerHeight / 2;
-	oLabelParent.style.left = originScreenPos.y + window.innerWidth / 2;
+	oLabelParent.style.top = originScreenPos.y;
+	oLabelParent.style.left = originScreenPos.x;
 	var dLabelText = document.createTextNode(dLabel);
 	var dLabelElement = document.createElement("P");
 	dLabelElement.style.color = "#00ff00";
 	var dLabelParent = document.createElement("DIV");
 	dLabelElement.appendChild(dLabelText);
 	dLabelParent.appendChild(dLabelElement);
-	dLabelParent.style.top = destinationScreenPos.x + window.innerHeight / 2;
-	dLabelParent.style.left = destinationScreenPos.y = window.innerWidth / 2;
+	dLabelParent.style.top = destinationScreenPos.y;
+	dLabelParent.style.left = destinationScreenPos.x;
 
 
 	// find quardant
 	if (oPt[0] >= 0 && oPt[1] >= 0) {
-		// top right
 		oLabelParent.setAttribute("class", "top-right");
-		oLabelParent.style.transform = "translateX(50%) translateY(-50%)";
 	} else if (oPt[0] >= 0 && oPt[1] < 0) {
-		// bottom right
 		oLabelParent.setAttribute("class", "bottom-right");
-		oLabelParent.style.transform = "translateX(50%) translateY(50%)";
 	} else if (oPt[0] < 0 && oPt[1] >= 0) {
-		// top left
 		oLabelParent.setAttribute("class", "top-left");
-		oLabelParent.style.transform = "translateX(-50%) translateY(-50%)";
 	} else {
-		// bottom left
 		oLabelParent.setAttribute("class", "bottom-left");
-		oLabelParent.style.transform = "translateX(-50%) translateY(50%)";
 	}
-
 	if (dPt[0] >= 0 && dPt[1] >= 0) {
-		// top right
 		dLabelParent.setAttribute("class", "top-right");
-		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
 	} else if (dPt[0] >= 0 && dPt[1] < 0) {
-		// bottom right
 		dLabelParent.setAttribute("class", "bottom-right");
-		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
 	} else if (dPt[0] < 0 && dPt[1] >= 0) {
-		// top left
 		dLabelParent.setAttribute("class", "top-left");
-		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
 	} else {
-		// bottom left
 		dLabelParent.setAttribute("class", "bottom-left");
-		dLabelParent.style.transform = "translateX(50%) translateY(-50%)";
 	}
 
 	oldOlabel = oLabelParent;

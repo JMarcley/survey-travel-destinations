@@ -1,18 +1,23 @@
 .top-left {
   position: absolute;
+  transform: translateX(-110%) translateY(-110%);
 }
 
 .top-right {
   position: absolute;
+  transform: translateX(10%) translateY(-110%);
 }
 
 .bottom-left {
   position: absolute;
+  transform: translateX(-110%) translateY(10%);
 }
 
 .bottom-right {
   position: absolute;
+  transform: translateX(10%) translateY(10%);
 }
+
 #loading-container {
   width: 100%;
   height: 100%;
